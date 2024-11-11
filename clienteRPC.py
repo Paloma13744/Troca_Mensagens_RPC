@@ -27,6 +27,10 @@ def listar_mensagens_privadas(identificacao):
 def listar_usuarios():
     return proxy.listar_usuarios()
 
+def listar_identificacoes_usuarios():
+    return proxy.listar_identificacoes_usuarios()
+
+
 def menu_principal(identificacao):
     while True:
         print("\n ______*** Menu de Sala de bate-papo *** _______")
@@ -48,9 +52,15 @@ def menu_principal(identificacao):
             for msg in mensagens:
                 print(msg)
         elif escolha == "3":
+            identificacoes = listar_identificacoes_usuarios()
+            for id in identificacoes:
+                print(id)    # Mostra as identificações dos usuários conectados afim de poder facilitar o envio
+            
             destinatario = input("Digite a identificação do destinatário: ")
             mensagem = input("Digite sua mensagem privada: ")
             print(enviar_mensagem_privada(identificacao, destinatario, mensagem))
+
+            
         elif escolha == "4":
             mensagens = listar_mensagens_privadas(identificacao)
             for msg in mensagens:

@@ -56,9 +56,9 @@ class ChatService(rpyc.Service):
         with self.lock:
             if identificacao_remetente in self.usuarios and identificacao_destinatario in self.usuarios:
                 mensagem_privada = {
-                    "de": self.usuarios[identificacao_remetente],
-                    "para": self.usuarios[identificacao_destinatario],
-                    "mensagem": mensagem
+                    "De": self.usuarios[identificacao_remetente],
+                    "Para": self.usuarios[identificacao_destinatario],
+                    "Mensagem": mensagem
                 }
                 self.mensagens_privadas.append(mensagem_privada)
                 print(f"Mensagem privada enviada: {mensagem_privada}")
@@ -69,9 +69,9 @@ class ChatService(rpyc.Service):
         with self.lock:
             # Filtrar apenas as mensagens onde o destinatário é o identificador requisitante
             mensagens_para_destinatario = [
-                f"Privado de {msg['de']} para você: {msg['mensagem']}"
+                f"Mensagem de {msg['de']} para você: {msg['mensagem']}"
                 for msg in self.mensagens_privadas
-                if msg["para"] == self.usuarios.get(identificacao_destinatario)
+                if msg["Para"] == self.usuarios.get(identificacao_destinatario)
             ]
             return mensagens_para_destinatario
 
@@ -79,6 +79,12 @@ class ChatService(rpyc.Service):
     def exposed_listar_usuarios(self):
         with self.lock:
             return list(self.usuarios.values())
+
+    def exposed_listar_identificacoes_usuarios(self):
+        with self.lock:
+            return list(self.usuarios.keys())  
+
+        
 
 if __name__ == "__main__":
     server = ThreadedServer(ChatService(), port=18861)
