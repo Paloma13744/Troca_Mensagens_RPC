@@ -1,14 +1,22 @@
-import xmlrpc.server
+import rpyc
+from rpyc.utils.server import ThreadedServer
 import threading
 
-class ChatServer:
+class ChatService(rpyc.Service):
     def __init__(self):
         self.usuarios = {}
-        self.mensagens = []
+        self.mensagens_publicas = []
+        self.mensagens_privadas = []
         self.numero_usuario = 1
         self.lock = threading.Lock()
 
-    def ingressar_no_sistema(self, nome):
+    def on_connect(self, conn):
+        pass
+
+    def on_disconnect(self, conn):
+        pass
+
+    def exposed_ingressar_no_sistema(self, nome):
         with self.lock:
             identificacao = f"{nome}{self.numero_usuario}"
             self.usuarios[identificacao] = nome
@@ -16,7 +24,7 @@ class ChatServer:
             print(f"Usuário registrado: {identificacao}")
             return identificacao
 
-    def entrar_na_sala(self, identificacao):
+    def exposed_entrar_na_sala(self, identificacao):
         with self.lock:
             if identificacao in self.usuarios:
                 print(f"Usuário {identificacao} entrou na sala.")
@@ -24,7 +32,7 @@ class ChatServer:
             print(f"Tentativa de entrada falhou. Usuário {identificacao} não encontrado.")
             return "Usuário não encontrado."
 
-    def sair_da_sala(self, identificacao):
+    def exposed_sair_da_sala(self, identificacao):
         with self.lock:
             if identificacao in self.usuarios:
                 usuario = self.usuarios.pop(identificacao)
@@ -33,34 +41,46 @@ class ChatServer:
             print(f"Tentativa de saída falhou. Usuário {identificacao} não encontrado.")
             return "Usuário não encontrado."
 
-    def enviar_mensagem(self, identificacao, mensagem):
+    def exposed_enviar_mensagem_publica(self, mensagem): # Envia mensagem para todos publicamente
         with self.lock:
-            if identificacao in self.usuarios:
-                self.mensagens.append(f"{self.usuarios[identificacao]}: {mensagem}")
-                return "Mensagem enviada."
-            return "Usuário não encontrado."
+            self.mensagens_publicas.append(mensagem)
+            print(f"Mensagem pública enviada: {mensagem}")
+            return "Mensagem pública enviada."
 
-    def listar_mensagens(self):
+    def exposed_listar_mensagens_publicas(self):  # Lista todas as mensagens do sistema
         with self.lock:
-            return self.mensagens
+            return self.mensagens_publicas
 
-    def enviar_mensagem_usuario(self, identificacao_remetente, identificacao_destinatario, mensagem):
+   
+    def exposed_enviar_mensagem_privada(self, identificacao_remetente, identificacao_destinatario, mensagem):
         with self.lock:
             if identificacao_remetente in self.usuarios and identificacao_destinatario in self.usuarios:
-                mensagem_privada = f"Privado de {self.usuarios[identificacao_remetente]} para {self.usuarios[identificacao_destinatario]}: {mensagem}"
-                return mensagem_privada
+                mensagem_privada = {
+                    "de": self.usuarios[identificacao_remetente],
+                    "para": self.usuarios[identificacao_destinatario],
+                    "mensagem": mensagem
+                }
+                self.mensagens_privadas.append(mensagem_privada)
+                print(f"Mensagem privada enviada: {mensagem_privada}")
+                return "Mensagem privada enviada."
             return "Usuário não encontrado."
+        
+    def exposed_listar_mensagens_privadas(self, identificacao_destinatario):
+        with self.lock:
+            # Filtrar apenas as mensagens onde o destinatário é o identificador requisitante
+            mensagens_para_destinatario = [
+                f"Privado de {msg['de']} para você: {msg['mensagem']}"
+                for msg in self.mensagens_privadas
+                if msg["para"] == self.usuarios.get(identificacao_destinatario)
+            ]
+            return mensagens_para_destinatario
 
-    def listar_usuarios(self):
+
+    def exposed_listar_usuarios(self):
         with self.lock:
             return list(self.usuarios.values())
 
-def run_server():
-    server = xmlrpc.server.SimpleXMLRPCServer(("localhost", 18861))
-    server.register_instance(ChatServer())
-    print("Servidor RPC iniciado na porta 18861...")
-    server.serve_forever()
-
 if __name__ == "__main__":
-    server_thread = threading.Thread(target=run_server)
-    server_thread.start()
+    server = ThreadedServer(ChatService(), port=18861)
+    print("Servidor RPC iniciado na porta 18861...")
+    server.start()
