@@ -19,7 +19,7 @@ class ChatService(rpyc.Service):
     def on_disconnect(self, conn):
         pass
 
-    def exposed_ingressar_no_sistema(self, nome):
+    def exposed_ingressar_no_sistema(self, nome):  # Exposed: Clientes podem chamá-los remotamente .Função para ingressar no sistema combinando seu nome com o sequencial sel.numero_usuario
         with self.lock:
             identificacao = f"{nome}{self.numero_usuario}"
             self.numero_usuario += 1
@@ -29,7 +29,7 @@ class ChatService(rpyc.Service):
     def exposed_entrar_na_sala(self, identificacao, nome_sala):
         with self.lock:
             if nome_sala in self.salas:
-                self.salas[nome_sala]["usuarios"][identificacao] = identificacao
+                self.salas[nome_sala]["usuarios"][identificacao] = identificacao  # Adiciona o usuário na sala
                 print(f"Usuário {identificacao} entrou na {nome_sala}.")
                 return f"Usuário {identificacao} entrou na {nome_sala}."
             else:
@@ -38,7 +38,7 @@ class ChatService(rpyc.Service):
     def exposed_sair_da_sala(self, identificacao, nome_sala):
         with self.lock:
             if nome_sala in self.salas and identificacao in self.salas[nome_sala]["usuarios"]:
-                self.salas[nome_sala]["usuarios"].pop(identificacao)
+                self.salas[nome_sala]["usuarios"].pop(identificacao)   # Usuário é removido do dicionário
                 print(f"Usuário {identificacao} saiu da {nome_sala}.")
                 return f"Usuário {identificacao} saiu da {nome_sala}."
             else:

@@ -21,11 +21,11 @@ class ChatClient:
             else:
                 print("Sala inválida. Escolha entre sala1, sala2 ou sala3.")
 
-    def sair_da_sala(self): # Função para sair da sala e também do diciionário de usuários (remove)
+    def sair_da_sala(self): 
         if self.sala_atual:
             resultado = self.conn.root.sair_da_sala(self.identificacao, self.sala_atual)
             print(resultado)
-            self.sala_atual = None   
+            self.sala_atual = None     # Função para sair da sala e também do dicionário de usuários (remove)
         else:
             print("Você não está em nenhuma sala.")
 
